@@ -16,7 +16,7 @@ UActorLoader::UActorLoader()
 
 void UActorLoader::LoadActor_Implementation(TSubclassOf<APawn> Class, const FTransform& SpawnTransform) {
 	APlayerController* Owner = Cast<APlayerController>(GetOwner());
-	if (Owner) {
+	if (Owner && Class) {
 		if (Owner->GetPawn()) {
 			Owner->GetPawn()->Destroy();
 		}
