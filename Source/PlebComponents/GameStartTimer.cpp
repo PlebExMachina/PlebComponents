@@ -39,7 +39,8 @@ bool UGameStartTimer::GetGameAlreadyStarted() {
 void UGameStartTimer::StopTimer(bool StartGame) {
 	if (GetOwner()->GetWorld()->GetAuthGameMode()) {
 		SetComponentTickEnabled(false);
-		if (StartGame) {
+		if (StartGame && !_internalGameAlreadyStarted) {
+			_internalGameAlreadyStarted = true;
 			BroadcastGameStart();
 		}
 	}
@@ -61,7 +62,6 @@ void UGameStartTimer::TickComponent(float DeltaTime, ELevelTick TickType, FActor
 
 		// Time Out, Begin Game
 		if (_internalRemainingTime == 0.f) {
-			_internalGameAlreadyStarted = true;
 			StopTimer(true);
 		}
 	}
