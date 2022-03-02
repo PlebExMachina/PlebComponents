@@ -13,6 +13,26 @@ UGenericState::UGenericState()
 	// ...
 }
 
+void UGenericState::RequestWriteInt_Implementation(FName Key, int32 Value)
+{
+	WriteInt(Key, Value);
+}
+
+void UGenericState::RequestWriteString_Implementation(FName Key, const FString& Value)
+{
+	WriteString(Key, Value);
+}
+
+void UGenericState::RequestWriteName_Implementation(FName Key, FName Value)
+{
+	WriteName(Key, Value);
+}
+
+void UGenericState::RequestWriteBool_Implementation(FName Key, bool Value)
+{
+	WriteBool(Key, Value);
+}
+
 void UGenericState::WriteInt_Implementation(FName Key, int32 Value)
 {
 	IntStore.Add(Key, Value);

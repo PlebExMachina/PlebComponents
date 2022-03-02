@@ -44,6 +44,18 @@ public:
 	// Sets default values for this component's properties
 	UGenericState();
 	
+	UFUNCTION(Server, Reliable)
+	void RequestWriteInt(FName Key, int32 Value);
+
+	UFUNCTION(Server, Reliable)
+	void RequestWriteString(FName Key, const FString& Value);
+
+	UFUNCTION(Server, Reliable)
+	void RequestWriteName(FName Key, FName Value);
+
+	UFUNCTION(Server, Reliable)
+	void RequestWriteBool(FName Key, bool Value);
+
 	UFUNCTION(NetMulticast, Reliable)
 	void WriteInt(FName Key, int32 Value);
 
