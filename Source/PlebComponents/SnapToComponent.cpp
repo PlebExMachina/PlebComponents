@@ -17,7 +17,6 @@ void USnapToComponent::GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& O
 	DOREPLIFETIME(USnapToComponent, _SnapToActor);
 	DOREPLIFETIME(USnapToComponent, _SnapToComponent);
 	DOREPLIFETIME(USnapToComponent, _SnapToLocation);
-	DOREPLIFETIME(USnapToComponent, _FocusActors);
 	DOREPLIFETIME(USnapToComponent, bRotatePitch);
 	DOREPLIFETIME(USnapToComponent, bRotateYaw);
 	DOREPLIFETIME(USnapToComponent, bTranslateX);
@@ -53,7 +52,6 @@ USnapToComponent::USnapToComponent()
 	_SnapToActor = nullptr;
 	_SnapToComponent = nullptr;
 	_SnapToLocation = FVector::ZeroVector;
-	_FocusActors = {};
 
 	_bIsTicking = false;
 }
@@ -119,46 +117,34 @@ void USnapToComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActo
 	TArray<AActor*> InterruptedActors = {};
 	TArray<AActor*> FinishedActors = {};
 
-	for (auto Actor : _FocusActors) {
-		bool InterruptionOccured = false;
+	auto Actor = GetOwner();
+	bool InterruptionOccured = false;
 
-		// If disabled then treat it as if it already succeeded.
-		bool RotationFinished = !ShouldRotate || false;
-		bool TranslationFinished = !ShouldTranslate || false;
+	// If disabled then treat it as if it already succeeded.
+	bool RotationFinished = !ShouldRotate || false;
+	bool TranslationFinished = !ShouldTranslate || false;
 
-		// interpolate rotation
-		if (ShouldRotate) {
-			FRotator InterpolatedRotator = UKismetMathLibrary::RInterpTo_Constant(Actor->GetActorRotation(), _GetSnapToRotation(Actor), DeltaTime, fRotateSpeed);
-			InterruptionOccured |= ! Actor->SetActorRotation(InterpolatedRotator);
-			RotationFinished = _GetSnapToRotation(Actor).Equals(Actor->GetActorRotation(),0.01f);
-		}
-
-		// interpolate location
-		if (ShouldTranslate) {
-			FVector InterpolatedVector = UKismetMathLibrary::VInterpTo_Constant(Actor->GetActorLocation(), _GetSnapToLocation(Actor), DeltaTime, fTranslateSpeed);
-			InterruptionOccured |= ! Actor->SetActorLocation(InterpolatedVector, true, nullptr, ETeleportType::TeleportPhysics);
-			TranslationFinished = _GetSnapToLocation(Actor).Equals(Actor->GetActorLocation(), 0.01f);
-		}
-
-		// Only track actors for events on server.
-		if (IsServer(this)) {
-			if (InterruptionOccured) {
-				InterruptedActors.Add(Actor);
-			}
-			if (!InterruptionOccured && RotationFinished && TranslationFinished) {
-				FinishedActors.Add(Actor);
-			}
-		}
+	// interpolate rotation
+	if (ShouldRotate) {
+		FRotator InterpolatedRotator = UKismetMathLibrary::RInterpTo_Constant(Actor->GetActorRotation(), _GetSnapToRotation(Actor), DeltaTime, fRotateSpeed);
+		InterruptionOccured |= ! Actor->SetActorRotation(InterpolatedRotator);
+		RotationFinished = _GetSnapToRotation(Actor).Equals(Actor->GetActorRotation(),0.01f);
 	}
 
-	// Only broadcasts events on server.
-	if (IsServer(this)) {
-		for (auto Actor : InterruptedActors) {
-			OnFocusInterrupted.Broadcast(this, Actor);
-		}
+	// interpolate location
+	if (ShouldTranslate) {
+		FVector InterpolatedVector = UKismetMathLibrary::VInterpTo_Constant(Actor->GetActorLocation(), _GetSnapToLocation(Actor), DeltaTime, fTranslateSpeed);
+		InterruptionOccured |= ! Actor->SetActorLocation(InterpolatedVector, true, nullptr, ETeleportType::TeleportPhysics);
+		TranslationFinished = _GetSnapToLocation(Actor).Equals(Actor->GetActorLocation(), 0.01f);
+	}
 
-		for (auto Actor : FinishedActors) {
-			OnFocusFinished.Broadcast(this, Actor);
+	// Only track actors for events on server.
+	if (IsServer(this)) {
+		if (InterruptionOccured) {
+			OnFocusInterrupted.Broadcast(this);
+		}
+		if (!InterruptionOccured && RotationFinished && TranslationFinished) {
+			OnFocusFinished.Broadcast(this);
 		}
 	}
 }
@@ -184,32 +170,11 @@ void USnapToComponent::SetSnapToLocation(const FVector& FocusLocation)
 	}
 }
 
-void USnapToComponent::AddFocusingActor(AActor* Actor)
-{
-	if (IsServer(this)) {
-		if ((_FocusActors.AddUnique(Actor) == INDEX_NONE) && IsComponentTickEnabled()) {
-			OnFocusStarted.Broadcast(this,Actor);
-		}
-		UE_LOG(LogTemp, Warning, TEXT("DEBUGGING %d"), _FocusActors.Num());
-	}
-}
-
-void USnapToComponent::ReleaseFocusingActor(AActor* Actor)
-{
-	if (IsServer(this)) {
-		if ((_FocusActors.RemoveSingle(Actor)) && IsComponentTickEnabled()) {
-			OnFocusInterrupted.Broadcast(this, Actor);
-		}
-	}
-}
-
 void USnapToComponent::BeginFocus()
 {
 	if (IsServer(this) && !_bIsTicking) {
 		_bIsTicking = true;
-		for (auto Actor : _FocusActors) {
-			OnFocusStarted.Broadcast(this, Actor);
-		}
+		OnFocusStarted.Broadcast(this);
 		OnRep_SetTick();
 	}
 }
@@ -218,9 +183,7 @@ void USnapToComponent::EndFocus()
 {
 	if (IsServer(this) && _bIsTicking) {
 		_bIsTicking = false;
-		for (auto Actor : _FocusActors) {
-			OnFocusInterrupted.Broadcast(this, Actor);
-		}
+		OnFocusInterrupted.Broadcast(this);
 		OnRep_SetTick();
 	}
 }

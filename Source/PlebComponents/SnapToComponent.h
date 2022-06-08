@@ -6,7 +6,7 @@
 #include "Components/ActorComponent.h"
 #include "SnapToComponent.generated.h"
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FSnapToComponentDelegate, class USnapToComponent*, Comp, AActor*, Actor);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FSnapToComponentDelegate, class USnapToComponent*, Comp);
 
 UENUM(BlueprintType)
 enum class ESnapMode : uint8 {
@@ -78,9 +78,6 @@ protected:
 	UPROPERTY(Replicated)
 	FVector _SnapToLocation;
 
-	UPROPERTY(Replicated)
-	TArray<AActor*> _FocusActors;
-
 	UPROPERTY(ReplicatedUsing = "OnRep_SetTick")
 	bool _bIsTicking;
 
@@ -106,14 +103,6 @@ public:
 	// Sets the Snap to reference. Only works on Server.
 	UFUNCTION(BlueprintCallable)
 	void SetSnapToLocation(const FVector& FocusLocation);
-	
-	// Adds actor to Focus Array. Only works on Server.
-	UFUNCTION(BlueprintCallable)
-	void AddFocusingActor(AActor* Actor);
-
-	// Releases actor from Focus Array. Only works on Server.
-	UFUNCTION(BlueprintCallable)
-	void ReleaseFocusingActor(AActor* Actor);
 
 	// Begins focusing for actors in the array. Only works on Server.
 	UFUNCTION(BlueprintCallable)
