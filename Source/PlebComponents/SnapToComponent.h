@@ -58,7 +58,11 @@ public:
 
 	// Determines what to use when snapping actors towards a target.
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Replicated)
-	ESnapMode SnapMode;
+	ESnapMode TranslateMode;
+
+	// Determines what to use when snapping actors towards a target.
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Replicated)
+	ESnapMode RotateMode;
 
 	// Event Fired when Focus begins or an Actor is added when focus has already started.
 	UPROPERTY(BlueprintAssignable)
@@ -74,18 +78,29 @@ public:
 
 protected:
 	UPROPERTY(Replicated)
-	AActor* _SnapToActor;
+	AActor* _TranslateActor;
 
 	UPROPERTY(Replicated)
-	USceneComponent* _SnapToComponent;
+	USceneComponent* _TranslateComponent;
 
 	UPROPERTY(Replicated)
-	FVector _SnapToLocation;
+	FVector _TranslateLocation;
+
+	UPROPERTY(Replicated)
+	AActor* _RotationActorRef;
+
+	UPROPERTY(Replicated)
+	USceneComponent* _RotationComponentRef;
+
+	UPROPERTY(Replicated)
+	FVector _RotationLocationRef;
 
 	UPROPERTY(ReplicatedUsing = "OnRep_SetTick")
 	bool _bIsTicking;
 
 	const FVector _GetSnapToLocation(AActor* Actor);
+
+	const FVector _GetSnapToRotationRef(AActor* Actor);
 
 	const FRotator _GetSnapToRotation(AActor* Actor);
 
@@ -96,17 +111,29 @@ public:
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
-	// Sets the Snap to reference. Only works on Server.
+	// Sets the (translation) Snap to reference. Only works on Server.
 	UFUNCTION(BlueprintCallable)
-	void SetSnapToActor(AActor* FocusActor);
+	void SetTranslateActor(AActor* FocusActor);
 
-	// Sets the Snap to reference. Only works on Server.
+	// Sets the (translation) Snap to reference. Only works on Server.
 	UFUNCTION(BlueprintCallable)
-	void SetSnapToComponent(USceneComponent* FocusComponent);
+	void SetTranslateComponent(USceneComponent* FocusComponent);
 
-	// Sets the Snap to reference. Only works on Server.
+	// Sets the (translation) Snap to reference. Only works on Server.
 	UFUNCTION(BlueprintCallable)
-	void SetSnapToLocation(const FVector& FocusLocation);
+	void SetTranslateLocation(const FVector& FocusLocation);
+
+	// Sets the (translation) Snap to reference. Only works on Server.
+	UFUNCTION(BlueprintCallable)
+	void SetRotationActorRef(AActor* FocusActor);
+
+	// Sets the (translation) Snap to reference. Only works on Server.
+	UFUNCTION(BlueprintCallable)
+	void SetRotationComponentRef(USceneComponent* FocusComponent);
+
+	// Sets the (translation) Snap to reference. Only works on Server.
+	UFUNCTION(BlueprintCallable)
+	void SetRotationLocationRef(const FVector& FocusLocation);
 
 	// Begins focusing for the owning actor. Only works on Server.
 	UFUNCTION(BlueprintCallable)

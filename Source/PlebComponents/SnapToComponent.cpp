@@ -14,9 +14,12 @@ namespace {
 void USnapToComponent::GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-	DOREPLIFETIME(USnapToComponent, _SnapToActor);
-	DOREPLIFETIME(USnapToComponent, _SnapToComponent);
-	DOREPLIFETIME(USnapToComponent, _SnapToLocation);
+	DOREPLIFETIME(USnapToComponent, _TranslateActor);
+	DOREPLIFETIME(USnapToComponent, _TranslateComponent);
+	DOREPLIFETIME(USnapToComponent, _TranslateLocation);
+	DOREPLIFETIME(USnapToComponent, _RotationActorRef);
+	DOREPLIFETIME(USnapToComponent, _RotationComponentRef);
+	DOREPLIFETIME(USnapToComponent, _RotationLocationRef);
 	DOREPLIFETIME(USnapToComponent, bRotatePitch);
 	DOREPLIFETIME(USnapToComponent, bRotateYaw);
 	DOREPLIFETIME(USnapToComponent, bTranslateX);
@@ -24,7 +27,8 @@ void USnapToComponent::GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& O
 	DOREPLIFETIME(USnapToComponent, bTranslateZ);
 	DOREPLIFETIME(USnapToComponent, fRotateSpeed);
 	DOREPLIFETIME(USnapToComponent, fTranslateSpeed);
-	DOREPLIFETIME(USnapToComponent, SnapMode);
+	DOREPLIFETIME(USnapToComponent, TranslateMode);
+	DOREPLIFETIME(USnapToComponent, RotateMode);
 
 	// This is used so that replication can control ticking for late joins and etc.
 	DOREPLIFETIME(USnapToComponent, _bIsTicking);
@@ -47,11 +51,16 @@ USnapToComponent::USnapToComponent()
 	bTranslateZ = false;
 	fRotateSpeed = 600.f;
 	fTranslateSpeed = 200.f;
-	SnapMode = ESnapMode::Actor;
+	TranslateMode = ESnapMode::Actor;
+	RotateMode = ESnapMode::Actor;
 
-	_SnapToActor = nullptr;
-	_SnapToComponent = nullptr;
-	_SnapToLocation = FVector::ZeroVector;
+	_TranslateActor = nullptr;
+	_TranslateComponent = nullptr;
+	_TranslateLocation = FVector::ZeroVector;
+
+	_RotationActorRef = nullptr;
+	_RotationComponentRef = nullptr;
+	_RotationLocationRef = FVector::ZeroVector;
 
 	_bIsTicking = false;
 }
@@ -60,15 +69,15 @@ USnapToComponent::USnapToComponent()
 const FVector USnapToComponent::_GetSnapToLocation(AActor* Actor)
 {
 	FVector FocusLocation = FVector::ZeroVector;
-	switch (SnapMode) {
+	switch (TranslateMode) {
 	case ESnapMode::Actor:
-		FocusLocation = _SnapToActor != nullptr ? _SnapToActor->GetActorLocation() : Actor->GetActorLocation();
+		FocusLocation = _TranslateActor != nullptr ? _TranslateActor->GetActorLocation() : Actor->GetActorLocation();
 		break;
 	case ESnapMode::Component:
-		FocusLocation = _SnapToComponent != nullptr ? _SnapToComponent->GetComponentLocation() : Actor->GetActorLocation();
+		FocusLocation = _TranslateComponent != nullptr ? _TranslateComponent->GetComponentLocation() : Actor->GetActorLocation();
 		break;
 	case ESnapMode::Manual:
-		FocusLocation = _SnapToLocation;
+		FocusLocation = _TranslateLocation;
 		break;
 	}
 
@@ -86,9 +95,27 @@ const FVector USnapToComponent::_GetSnapToLocation(AActor* Actor)
 	return FocusLocation;
 }
 
+const FVector USnapToComponent::_GetSnapToRotationRef(AActor* Actor)
+{
+	FVector FocusLocation = FVector::ZeroVector;
+	switch (RotateMode) {
+	case ESnapMode::Actor:
+		FocusLocation = _RotationActorRef != nullptr ? _RotationActorRef->GetActorLocation() : Actor->GetActorLocation();
+		break;
+	case ESnapMode::Component:
+		FocusLocation = _RotationComponentRef != nullptr ? _RotationComponentRef->GetComponentLocation() : Actor->GetActorLocation();
+		break;
+	case ESnapMode::Manual:
+		FocusLocation = _RotationLocationRef;
+		break;
+	}
+
+	return FocusLocation;
+}
+
 const FRotator USnapToComponent::_GetSnapToRotation(AActor* Actor)
 {
-	FRotator FocusRotation = UKismetMathLibrary::FindLookAtRotation(Actor->GetActorLocation(), _GetSnapToLocation(Actor));
+	FRotator FocusRotation = UKismetMathLibrary::FindLookAtRotation(Actor->GetActorLocation(), _GetSnapToRotationRef(Actor));
 
 	// If ignoring then set actor current value as final value.
 	if (!bRotatePitch) {
@@ -149,24 +176,45 @@ void USnapToComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActo
 	}
 }
 
-void USnapToComponent::SetSnapToActor(AActor* FocusActor)
+void USnapToComponent::SetTranslateActor(AActor* FocusActor)
 {
 	if (IsServer(this)) {
-		_SnapToActor = FocusActor;
+		_TranslateActor = FocusActor;
 	}
 }
 
-void USnapToComponent::SetSnapToComponent(USceneComponent* FocusComponent)
+void USnapToComponent::SetTranslateComponent(USceneComponent* FocusComponent)
 {
 	if (IsServer(this)) {
-		_SnapToComponent = FocusComponent;
+		_TranslateComponent = FocusComponent;
 	}
 }
 
-void USnapToComponent::SetSnapToLocation(const FVector& FocusLocation)
+void USnapToComponent::SetTranslateLocation(const FVector& FocusLocation)
 {
 	if (IsServer(this)) {
-		_SnapToLocation = FocusLocation;
+		_TranslateLocation = FocusLocation;
+	}
+}
+
+void USnapToComponent::SetRotationActorRef(AActor* FocusActor)
+{
+	if (IsServer(this)) {
+		_RotationActorRef = FocusActor;
+	}
+}
+
+void USnapToComponent::SetRotationComponentRef(USceneComponent* FocusComponent)
+{
+	if (IsServer(this)) {
+		_RotationComponentRef = FocusComponent;
+	}
+}
+
+void USnapToComponent::SetRotationLocationRef(const FVector& FocusLocation)
+{
+	if (IsServer(this)) {
+		_RotationLocationRef = FocusLocation;
 	}
 }
 
