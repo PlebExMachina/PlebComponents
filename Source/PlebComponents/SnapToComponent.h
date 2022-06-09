@@ -15,6 +15,10 @@ enum class ESnapMode : uint8 {
 	Manual,
 };
 
+/* 
+* Server controlled component to make a controlled actor track location / rotation towards a target.
+* It's delegates are only fired on server and are intended to be used for certain cinematic actions ie: Opening a door.
+*/
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class PLEBCOMPONENTS_API USnapToComponent : public UActorComponent
 {
@@ -104,11 +108,11 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void SetSnapToLocation(const FVector& FocusLocation);
 
-	// Begins focusing for actors in the array. Only works on Server.
+	// Begins focusing for the owning actor. Only works on Server.
 	UFUNCTION(BlueprintCallable)
 	void BeginFocus();
 
-	// Ends focusing for actors in the array. Only works on Server.
+	// Ends focusing for the owning actor. Only works on Server.
 	UFUNCTION(BlueprintCallable)
 	void EndFocus();
 };
