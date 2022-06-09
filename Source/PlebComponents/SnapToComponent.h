@@ -18,6 +18,8 @@ enum class ESnapMode : uint8 {
 /* 
 * Server controlled component to make a controlled actor track location / rotation towards a target.
 * It's delegates are only fired on server and are intended to be used for certain cinematic actions ie: Opening a door.
+* 
+* This is only super suitable for short movements. There may be some jitter on larger movements.
 */
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class PLEBCOMPONENTS_API USnapToComponent : public UActorComponent

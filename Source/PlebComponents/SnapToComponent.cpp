@@ -140,10 +140,6 @@ void USnapToComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActo
 	bool ShouldRotate = bRotatePitch || bRotateYaw;
 	bool ShouldTranslate = bTranslateX || bTranslateY || bTranslateZ;
 
-	// Event causing actors should be isolated as otherwise removing from the list of Actors (an expected behavior) would be unsafe.
-	TArray<AActor*> InterruptedActors = {};
-	TArray<AActor*> FinishedActors = {};
-
 	auto Actor = GetOwner();
 	bool InterruptionOccured = false;
 
