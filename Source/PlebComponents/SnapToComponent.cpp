@@ -157,7 +157,8 @@ void USnapToComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActo
 	// interpolate location
 	if (ShouldTranslate) {
 		FVector InterpolatedVector = UKismetMathLibrary::VInterpTo_Constant(Actor->GetActorLocation(), _GetSnapToLocation(Actor), DeltaTime, fTranslateSpeed);
-		InterruptionOccured |= ! Actor->SetActorLocation(InterpolatedVector, true, nullptr, ETeleportType::TeleportPhysics);
+		//InterruptionOccured |= ! Actor->SetActorLocation(InterpolatedVector, true, nullptr, ETeleportType::TeleportPhysics);
+		Actor->PostNetReceiveVelocity(InterpolatedVector);
 		TranslationFinished = _GetSnapToLocation(Actor).Equals(Actor->GetActorLocation(), 0.01f);
 	}
 
