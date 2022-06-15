@@ -21,11 +21,11 @@ public:
 	// Sets default values for this component's properties
 	UHitscanComponent();
 
-	// How far away to place the firing lens. The greater the distance the more accurate the firing will be.
+	// How far away to place the firing lens. The greater the distance the more accurate the firing will be. Affects the "Minimum Bloom" of the shot.
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Replicated)
 	float LensDistance;
 
-	// How large the firing lens is. The greater the radius the less accurate the firing will be.
+	// How large the firing lens is. The greater the radius the less accurate the firing will be. Affects the "Maximum Bloom" of the shot.
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Replicated)
 	float LensRadius;
 
