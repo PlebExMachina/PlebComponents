@@ -6,6 +6,8 @@
 #include "HitscanComponent.h"
 #include "GunComponent.generated.h"
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FGunComponentEvent, UGunComponent*, Comp);
+
 /**
  * 
  */
@@ -14,8 +16,17 @@ class PLEBCOMPONENTS_API UGunComponent : public UHitscanComponent
 {
 	GENERATED_BODY()
 	
+private:
+	UPROPERTY()
+	USceneComponent* DebugOrigin;
+
+	UPROPERTY()
+	FVector DebugForwardVector;
+
 protected:
 	virtual void TickComponent(float DeltaTime, enum ELevelTick TickType, FActorComponentTickFunction* TickFunction) override;
+
+	virtual void BeginPlay() override;
 
 	// The minimum distance the lens can be.
 	UPROPERTY(EditAnywhere, Replicated)
@@ -33,15 +44,29 @@ protected:
 	UPROPERTY(EditAnywhere, Replicated)
 	float Recovery;
 
-	UPROPERTY()
-	USceneComponent* DebugOrigin;
+	// How much ammunition the weapon can have. < 0 for infinite.
+	UPROPERTY(EditAnywhere, Replicated)
+	int32 MaximumAmmunition;
 
-	UPROPERTY()
-	FVector DebugForwardVector;
+	// How much ammunition is currently in the weapon.
+	UPROPERTY(Replicated)
+	int32 CurrentAmmunition;
+	
+	// How much ammunition the weapon consumes per shot.
+	UPROPERTY(Replicated)
+	int32 AmmoConsumption;
 
 
 public:
 	UGunComponent();
+
+	// Called whenever a gun is attempted to be fired when out of ammo.
+	UPROPERTY(BlueprintAssignable)
+	FGunComponentEvent OnOutOfAmmo;
+
+	// Called whenever a reload is attempted on a gun with already full ammo.
+	UPROPERTY(BlueprintAssignable)
+	FGunComponentEvent OnAlreadyMaxAmmo;
 
 	// The minimum distance the lens can be.
 	UFUNCTION(BlueprintCallable)
@@ -78,4 +103,12 @@ public:
 	// Server Only, Fires a raycast utilizing the configuration. The raycast result is then multicast and passed 
 	UFUNCTION(BlueprintCallable)
 	void GunFire(USceneComponent* Origin, const FVector& ForwardVector, const TArray<AActor*>& IgnoredActors);
+
+	// Server Only, Reloads ammunition. Returns how many bullets were added.
+	UFUNCTION(BlueprintCallable)
+	int32 Reload();
+
+	// Returns whether or not a reload is possible.
+	UFUNCTION(BlueprintPure)
+	bool CanReload();
 };

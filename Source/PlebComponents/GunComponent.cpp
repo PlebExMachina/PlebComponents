@@ -17,6 +17,10 @@ void UGunComponent::GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutL
 	DOREPLIFETIME(UGunComponent, MaximumLens);
 	DOREPLIFETIME(UGunComponent, Recoil);
 	DOREPLIFETIME(UGunComponent, Recovery);
+	DOREPLIFETIME(UGunComponent, MaximumAmmunition);
+	DOREPLIFETIME(UGunComponent, CurrentAmmunition);
+	DOREPLIFETIME(UGunComponent, AmmoConsumption);
+
 }
 
 void UGunComponent::TickComponent(float DeltaTime, enum ELevelTick TickType, FActorComponentTickFunction* TickFunction) {
@@ -34,6 +38,14 @@ void UGunComponent::TickComponent(float DeltaTime, enum ELevelTick TickType, FAc
 	}
 }
 
+void UGunComponent::BeginPlay()
+{
+	Super::BeginPlay();
+	if (IsServer(this)) {
+		CurrentAmmunition = MaximumAmmunition;
+	}
+}
+
 UGunComponent::UGunComponent()
 {
 	MinimumLens = TrueMinimum;
@@ -41,6 +53,9 @@ UGunComponent::UGunComponent()
 	Recoil = 400.f;
 	Recovery = 2000.f;
 	LensRadius = 30.f;
+
+	MaximumAmmunition = 10;
+	AmmoConsumption = 2;
 
 	DebugOrigin = nullptr;
 	DebugForwardVector = FVector::ZeroVector;
@@ -99,12 +114,42 @@ float UGunComponent::GetRecovery()
 
 void UGunComponent::GunFire(USceneComponent* Origin, const FVector& ForwardVector, const TArray<AActor*>& IgnoredActors) {
 	if (IsServer(this)) {
-		Fire(Origin->GetComponentLocation(), ForwardVector * FiringDistance + Origin->GetComponentLocation(), IgnoredActors);
-		LensDistance = FMath::Clamp(LensDistance - Recoil, MinimumLens, MaximumLens);
+		if (CurrentAmmunition != 0) {
+			Fire(Origin->GetComponentLocation(), ForwardVector * FiringDistance + Origin->GetComponentLocation(), IgnoredActors);
+			LensDistance = FMath::Clamp(LensDistance - Recoil, MinimumLens, MaximumLens);
 
-		if (bDebug) {
-			DebugOrigin = Origin;
-			DebugForwardVector = ForwardVector;
+			// Negative Max Ammo is Infinite
+			if (MaximumAmmunition >= 0) {
+				CurrentAmmunition = (CurrentAmmunition - AmmoConsumption) < 0 ? 0 : (CurrentAmmunition - AmmoConsumption);
+			}
+
+			if (bDebug) {
+				DebugOrigin = Origin;
+				DebugForwardVector = ForwardVector;
+				UE_LOG(LogTemp, Warning, TEXT("Bullets Remaining: %d"), CurrentAmmunition);
+			}
+		} else {
+			OnOutOfAmmo.Broadcast(this);
 		}
 	}
+}
+
+int32 UGunComponent::Reload()
+{
+	int32 out = 0;
+	if(IsServer(this)){
+		out = MaximumAmmunition - CurrentAmmunition;
+		CurrentAmmunition = MaximumAmmunition;
+		if (bDebug) {
+			UE_LOG(LogTemp, Warning, TEXT("Bullets Reloaded: %d"), out);
+		}
+		if (out == 0) {
+			OnAlreadyMaxAmmo.Broadcast(this);
+		}
+	}
+	return out;
+}
+
+bool UGunComponent::CanReload() {
+	return (MaximumAmmunition - CurrentAmmunition) != 0;
 }
