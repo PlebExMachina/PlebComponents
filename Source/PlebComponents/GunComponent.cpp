@@ -4,6 +4,9 @@
 #include "GunComponent.h"
 #include "Net/UnrealNetwork.h"
 #include "DrawDebugHelpers.h"
+#include "Kismet/GameplayStatics.h"
+#include "Sound/SoundCue.h"
+#include "Particles/ParticleSystem.h"
 
 namespace {
 	auto IsServer = [](UObject* o) -> bool { return o->GetWorld()->GetAuthGameMode() != nullptr; };
@@ -13,6 +16,7 @@ namespace {
 void UGunComponent::GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	DOREPLIFETIME(UGunComponent, OriginPoint);
 	DOREPLIFETIME(UGunComponent, MinimumLens);
 	DOREPLIFETIME(UGunComponent, MaximumLens);
 	DOREPLIFETIME(UGunComponent, Recoil);
@@ -38,12 +42,28 @@ void UGunComponent::TickComponent(float DeltaTime, enum ELevelTick TickType, FAc
 	}
 }
 
+void UGunComponent::PlayMuzzleFX(UHitscanComponent* Comp, const TArray<FHitResult>& Hits) {
+	if (OriginPoint) {
+		USoundCue* SoundFX = FiringSFX.LoadSynchronous();
+		UParticleSystem* ParticleFX = FiringFlash.LoadSynchronous();
+		if (SoundFX) {
+			UGameplayStatics::PlaySoundAtLocation(this, SoundFX, OriginPoint->GetComponentLocation());
+		}
+
+		if (ParticleFX) {
+			UGameplayStatics::SpawnEmitterAttached(ParticleFX, OriginPoint, NAME_None, OriginPoint->GetComponentLocation(), OriginPoint->GetComponentRotation(), EAttachLocation::KeepWorldPosition);
+		}
+	}
+}
+
 void UGunComponent::BeginPlay()
 {
 	Super::BeginPlay();
 	if (IsServer(this)) {
 		CurrentAmmunition = MaximumAmmunition;
 	}
+
+	OnHitscanHit.AddDynamic(this, &UGunComponent::PlayMuzzleFX);
 }
 
 UGunComponent::UGunComponent()
@@ -56,6 +76,8 @@ UGunComponent::UGunComponent()
 
 	MaximumAmmunition = 10;
 	AmmoConsumption = 2;
+
+	OriginPoint = nullptr;
 
 	DebugOrigin = nullptr;
 	DebugForwardVector = FVector::ZeroVector;
@@ -112,10 +134,10 @@ float UGunComponent::GetRecovery()
 }
 
 
-void UGunComponent::GunFire(USceneComponent* Origin, const FVector& ForwardVector, const TArray<AActor*>& IgnoredActors) {
-	if (IsServer(this)) {
+void UGunComponent::GunFire(const FVector& ForwardVector, const TArray<AActor*>& IgnoredActors) {
+	if (IsServer(this) && OriginPoint) {
 		if (CurrentAmmunition != 0) {
-			Fire(Origin->GetComponentLocation(), ForwardVector * FiringDistance + Origin->GetComponentLocation(), IgnoredActors);
+			Fire(OriginPoint->GetComponentLocation(), ForwardVector * FiringDistance + OriginPoint->GetComponentLocation(), IgnoredActors);
 			LensDistance = FMath::Clamp(LensDistance - Recoil, MinimumLens, MaximumLens);
 
 			// Negative Max Ammo is Infinite
@@ -124,7 +146,7 @@ void UGunComponent::GunFire(USceneComponent* Origin, const FVector& ForwardVecto
 			}
 
 			if (bDebug) {
-				DebugOrigin = Origin;
+				DebugOrigin = OriginPoint;
 				DebugForwardVector = ForwardVector;
 				UE_LOG(LogTemp, Warning, TEXT("Bullets Remaining: %d"), CurrentAmmunition);
 			}
@@ -152,4 +174,25 @@ int32 UGunComponent::Reload()
 
 bool UGunComponent::CanReload() {
 	return (MaximumAmmunition - CurrentAmmunition) != 0;
+}
+
+void UGunComponent::SetMuzzleFX(TSoftObjectPtr<UParticleSystem> NewPS)
+{
+	if (IsServer(this)) {
+		FiringFlash = NewPS;
+	}
+}
+
+void UGunComponent::SetSoundFX(TSoftObjectPtr<USoundCue> NewCue)
+{
+	if (IsServer(this)) {
+		FiringSFX = NewCue; 
+	}
+}
+
+void UGunComponent::SetOriginPoint(USceneComponent* NewOrigin)
+{
+	if (IsServer(this)) {
+		OriginPoint = NewOrigin;
+	}
 }

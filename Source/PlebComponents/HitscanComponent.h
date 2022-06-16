@@ -6,7 +6,7 @@
 #include "Components/ActorComponent.h"
 #include "HitscanComponent.generated.h"
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FHitscanEvent, class UHitscanComponent*, Comp, const TArray<FHitResult>&, Hits);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FHitscanEvent, UHitscanComponent*, Comp, const TArray<FHitResult>&, Hits);
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class PLEBCOMPONENTS_API UHitscanComponent : public UActorComponent
@@ -41,6 +41,7 @@ public:
 	UPROPERTY(EditAnywhere)
 	bool bDebug;
 
+	// Executed after hitscan projectiles have hit their mark.
 	UPROPERTY(BlueprintAssignable)
 	FHitscanEvent OnHitscanHit;
 

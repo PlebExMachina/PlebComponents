@@ -28,6 +28,10 @@ protected:
 
 	virtual void BeginPlay() override;
 
+	// Plays Muzzle Sound Effect / Muzzle Particle Effect
+	UFUNCTION()
+	void PlayMuzzleFX(UHitscanComponent* Comp, const TArray<FHitResult>& Hits);
+
 	// The minimum distance the lens can be.
 	UPROPERTY(EditAnywhere, Replicated)
 	float MinimumLens;
@@ -56,6 +60,13 @@ protected:
 	UPROPERTY(Replicated)
 	int32 AmmoConsumption;
 
+	// The sound effect to play when the gun fires.
+	UPROPERTY(Replicated, EditAnywhere)
+	TSoftObjectPtr<class USoundCue> FiringSFX;
+
+	// The muzzle flash to play at the USceneComponent* Origin.
+	UPROPERTY(Replicated, EditAnywhere)
+	TSoftObjectPtr<class UParticleSystem> FiringFlash;
 
 public:
 	UGunComponent();
@@ -67,6 +78,10 @@ public:
 	// Called whenever a reload is attempted on a gun with already full ammo.
 	UPROPERTY(BlueprintAssignable)
 	FGunComponentEvent OnAlreadyMaxAmmo;
+
+	// Server Only, Sets the origin object for the bullet to be fired from.
+	UPROPERTY(Replicated)
+	USceneComponent* OriginPoint;
 
 	// The minimum distance the lens can be.
 	UFUNCTION(BlueprintCallable)
@@ -102,7 +117,7 @@ public:
 
 	// Server Only, Fires a raycast utilizing the configuration. The raycast result is then multicast and passed 
 	UFUNCTION(BlueprintCallable)
-	void GunFire(USceneComponent* Origin, const FVector& ForwardVector, const TArray<AActor*>& IgnoredActors);
+	void GunFire(const FVector& ForwardVector, const TArray<AActor*>& IgnoredActors);
 
 	// Server Only, Reloads ammunition. Returns how many bullets were added.
 	UFUNCTION(BlueprintCallable)
@@ -111,4 +126,16 @@ public:
 	// Returns whether or not a reload is possible.
 	UFUNCTION(BlueprintPure)
 	bool CanReload();
+
+	// Server Only, The sound effect to play when the gun fires.
+	UFUNCTION(BlueprintCallable)
+	void SetSoundFX(TSoftObjectPtr<USoundCue> NewCue);
+
+	// Server Only, The muzzle flash to play at the USceneComponent* Origin.
+	UFUNCTION(BlueprintCallable)
+	void SetMuzzleFX(TSoftObjectPtr<UParticleSystem> NewPS);
+
+	// Server Only, Sets the origin object for the bullet to be fired from.
+	UFUNCTION(BlueprintCallable)
+	void SetOriginPoint(USceneComponent* NewOrigin);
 };
