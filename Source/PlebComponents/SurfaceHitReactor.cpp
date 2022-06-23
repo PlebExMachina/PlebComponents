@@ -46,11 +46,9 @@ void USurfaceHitReactor::ReactToHit(UHitscanComponent* Comp, const TArray<FHitRe
 			auto TrailEmitter = UGameplayStatics::SpawnEmitterAttached(Trail, GunComp->OriginPoint, NAME_None, GunComp->OriginPoint->GetComponentLocation(), GunComp->OriginPoint->GetComponentRotation(), EAttachLocation::KeepWorldPosition);
 			if (TrailEmitter) {
 				TrailEmitter->SetBeamTargetPoint(0, Hit.ImpactPoint, 0);
-				UE_LOG(LogTemp, Warning, TEXT("TRAIL TRACED"));
 			}
 		}
 	}
-	UE_LOG(LogTemp, Warning, TEXT("HIT REACTION DONE"));
 }
 
 // Sets default values for this component's properties

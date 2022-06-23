@@ -18,6 +18,7 @@ class PLEBCOMPONENTS_API USurfaceHitReactor : public UActorComponent
 
 protected:
 	// Actually responds to the hit events creating trail / impact particles and playing SFX as needed.
+	// Trail particles only occur if bound to GunComponents. Impact effects will work on any Hitscan variant.
 	UFUNCTION(BlueprintCallable)
 	void ReactToHit(class UHitscanComponent* Comp, const TArray<FHitResult>& Hits);
 
