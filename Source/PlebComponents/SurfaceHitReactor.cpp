@@ -43,9 +43,8 @@ void USurfaceHitReactor::ReactToHit(UHitscanComponent* Comp, const TArray<FHitRe
 		// Trails can occur on any hits.
 		auto Trail = HitTrailParticle.LoadSynchronous();
 		if (Trail && GunComp) {
-			auto TrailEmitter = UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), Trail, GunComp->OriginPoint->GetComponentTransform());
+			auto TrailEmitter = UGameplayStatics::SpawnEmitterAttached(Trail, GunComp->OriginPoint, NAME_None, GunComp->OriginPoint->GetComponentLocation(), GunComp->OriginPoint->GetComponentRotation(), EAttachLocation::KeepWorldPosition);
 			if (TrailEmitter) {
-				TrailEmitter->SetBeamSourcePoint(0, GunComp->OriginPoint->GetComponentLocation(), 0);
 				TrailEmitter->SetBeamTargetPoint(0, Hit.ImpactPoint, 0);
 				UE_LOG(LogTemp, Warning, TEXT("TRAIL TRACED"));
 			}
