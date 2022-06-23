@@ -25,10 +25,6 @@ public:
 	// Called when an object is first constructed and added to a pool.
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
 	void Initialize(class UObjectPooler* Pooler);
-	
-	// Gets the pool owner. This is necessary for book keeping.
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
-	class UObjectPooler* GetPoolOwner();
 
 	// Called when an object is added back into the pool (pseudo-deleted)
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
