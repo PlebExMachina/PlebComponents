@@ -45,6 +45,9 @@ public:
 	UPROPERTY(BlueprintAssignable)
 	FHitscanEvent OnHitscanHit;
 
+	UPROPERTY(EditAnywhere)
+	TEnumAsByte<ECollisionChannel> FiringChannel;
+
 	// Server Only, Fires a raycast utilizing the configuration. The raycast result is then multicast and passed 
 	UFUNCTION(BlueprintCallable)
 	void Fire(const FVector& Origin, const FVector& Target, const TArray<AActor*>& IgnoredActors);

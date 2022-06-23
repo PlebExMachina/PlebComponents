@@ -26,6 +26,7 @@ UHitscanComponent::UHitscanComponent()
 	LensDistance = 350.f;
 	FiringDistance = 20000.f;
 	FireCount = 2;
+	FiringChannel = ECollisionChannel::ECC_Visibility;
 	// ...
 }
 
@@ -38,6 +39,9 @@ void UHitscanComponent::Fire(const FVector& Origin, const FVector& Target, const
 
 		FCollisionQueryParams LocalCollisionParams;
 		LocalCollisionParams.AddIgnoredActor(GetOwner());
+
+		// Make sure surface type is returned.
+		LocalCollisionParams.bReturnPhysicalMaterial = true;
 
 		for (const AActor* Actor : IgnoredActors) {
 			LocalCollisionParams.AddIgnoredActor(Actor);
@@ -55,7 +59,7 @@ void UHitscanComponent::Fire(const FVector& Origin, const FVector& Target, const
 
 			FVector AdjustedTarget = ((LensSample - Origin).GetSafeNormal() * FiringDistance) + Origin;
 
-			GetWorld()->LineTraceSingleByChannel(Hit, Origin, AdjustedTarget, ECollisionChannel::ECC_WorldStatic, LocalCollisionParams);
+			GetWorld()->LineTraceSingleByChannel(Hit, Origin, AdjustedTarget, FiringChannel, LocalCollisionParams);
 			if (bDebug) {
 				DrawDebugLine(GetWorld(), Origin, AdjustedTarget, FColor(0, 255, 0), false, 3.f);
 			}
