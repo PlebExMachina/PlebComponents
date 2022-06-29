@@ -4,21 +4,19 @@
 #include "CharacterSelectCompanion.h"
 #include "GameFramework/GameStateBase.h"
 #include "CharacterSelect.h"
+#include "PlebComponentsAPI.h"
 
 // Sets default values for this component's properties
 UCharacterSelectCompanion::UCharacterSelectCompanion()
 {
-	// Set this component to be initialized when the game starts, and to be ticked every frame.  You can turn these features
-	// off to improve performance if you don't need them.
 	PrimaryComponentTick.bCanEverTick = false;
-
-	// ...
 }
 
 void UCharacterSelectCompanion::ChooseCharacter_Implementation(TSubclassOf<APawn> Character) {
-	APlayerController* PlayerController = Cast<APlayerController>(GetOwner());
+	// Control transferred to server. Owning connection made. Request character.
+	auto PlayerController = Cast<APlayerController>(GetOwner());
 	if (PlayerController) {
-		UCharacterSelect* CharacterSelect = Cast<UCharacterSelect>(GetWorld()->GetGameState()->GetComponentByClass(UCharacterSelect::StaticClass()));
+		auto CharacterSelect = PlebComponentsAPI::GetComponent<UCharacterSelect>(GetWorld()->GetGameState());
 		if (CharacterSelect) {
 			CharacterSelect->ChooseCharacter(PlayerController,Character);
 		}

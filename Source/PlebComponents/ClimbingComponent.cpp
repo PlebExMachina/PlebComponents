@@ -4,6 +4,7 @@
 #include "ClimbingComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Net/UnrealNetwork.h"
+#include "PlebComponentsAPI.h"
 
 namespace {
 	auto IsServer = [](UObject* o) -> bool { return nullptr != o->GetWorld()->GetAuthGameMode(); };
@@ -61,7 +62,7 @@ void UClimbingComponent::TickComponent(float DeltaTime, ELevelTick TickType, FAc
 UCharacterMovementComponent* UClimbingComponent::GetCharacterMovement() {
 	// Lazy Get
 	if (!_CharacterMovement) {
-		_CharacterMovement = Cast<UCharacterMovementComponent>(GetOwner()->GetComponentByClass(UCharacterMovementComponent::StaticClass()));
+		_CharacterMovement = PlebComponentsAPI::GetComponent<UCharacterMovementComponent>(GetOwner());
 	}
 	return _CharacterMovement;
 }
@@ -108,12 +109,6 @@ bool UClimbingComponent::IsClimbing() {
 }
 
 bool UClimbingComponent::NearGround(const FVector& ReferenceLocation, const FVector& DownVector) {
-	// Raytrace downward from reference location (such as ball of foot)
-	FHitResult OutHit;
-	FCollisionObjectQueryParams ObjectQueryParams = FCollisionObjectQueryParams::DefaultObjectQueryParam;
-	FCollisionQueryParams CollisionQueryParams = FCollisionQueryParams::DefaultQueryParam;
-	ObjectQueryParams.AddObjectTypesToQuery(ECollisionChannel::ECC_WorldStatic);
-	CollisionQueryParams.AddIgnoredActor(GetOwner());
-	GetWorld()->LineTraceSingleByObjectType(OutHit, ReferenceLocation, ReferenceLocation + DownVector * 10.f, ObjectQueryParams, CollisionQueryParams);
-	return OutHit.bBlockingHit;
+	// Raytrace downward from reference location (such as ball of foot)	
+	return PlebComponentsAPI::LineTraceSingleByLength(GetOwner(), ReferenceLocation, DownVector, 10.f).bBlockingHit;
 }

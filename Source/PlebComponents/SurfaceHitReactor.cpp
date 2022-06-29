@@ -24,26 +24,23 @@ void USurfaceHitReactor::ReactToHit(UHitscanComponent* Comp, const TArray<FHitRe
 			auto SFX = HitImpactSFX.Find(HitSurface);
 			if (!SFX) { SFX = HitImpactSFX.Find(DefaultSurface); }
 			if (SFX) {
-				auto SFX_Cue = SFX->LoadSynchronous();
-				if (SFX_Cue) {
-					UGameplayStatics::PlaySoundAtLocation(GetWorld(), SFX_Cue, Hit.ImpactPoint);
+				if (SFX->LoadSynchronous()) {
+					UGameplayStatics::PlaySoundAtLocation(GetWorld(), SFX->Get(), Hit.ImpactPoint);
 				}
 			}
 
 			auto Particle = HitImpactParticle.Find(HitSurface);
 			if (!Particle) { Particle = HitImpactParticle.Find(DefaultSurface); }
 			if (Particle) {
-				auto Particle_Emitter = Particle->LoadSynchronous();
-				if (Particle_Emitter) {
+				if (Particle->LoadSynchronous()) {
 					// Spawn particle pointing away from the impact point at the impact point.
-					UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), Particle_Emitter, FTransform((Hit.ImpactPoint + Hit.ImpactNormal).Rotation(), Hit.ImpactPoint));
+					UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), Particle->Get(), FTransform((Hit.ImpactPoint + Hit.ImpactNormal).Rotation(), Hit.ImpactPoint));
 				}
 			}
 		}
 		// Trails can occur on any hits.
-		auto Trail = HitTrailParticle.LoadSynchronous();
-		if (Trail && GunComp) {
-			auto TrailEmitter = UGameplayStatics::SpawnEmitterAttached(Trail, GunComp->OriginPoint, NAME_None, GunComp->OriginPoint->GetComponentLocation(), GunComp->OriginPoint->GetComponentRotation(), EAttachLocation::KeepWorldPosition);
+		if (HitTrailParticle.LoadSynchronous() && GunComp) {
+			auto TrailEmitter = UGameplayStatics::SpawnEmitterAttached(HitTrailParticle.Get(), GunComp->OriginPoint, NAME_None, GunComp->OriginPoint->GetComponentLocation(), GunComp->OriginPoint->GetComponentRotation(), EAttachLocation::KeepWorldPosition);
 			if (TrailEmitter) {
 				TrailEmitter->SetBeamTargetPoint(0, Hit.ImpactPoint, 0);
 			}

@@ -4,6 +4,7 @@
 #include "HitscanComponent.h"
 #include "Net/UnrealNetwork.h"
 #include "DrawDebugHelpers.h"
+#include "PlebComponentsAPI.h"
 
 void UHitscanComponent::GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLifetimeProps) const
 {
@@ -37,34 +38,24 @@ void UHitscanComponent::Fire(const FVector& Origin, const FVector& Target, const
 		FVector LensLocation = ((Target - Origin).GetSafeNormal() * LensDistance) + Origin;
 		TArray<FHitResult> Hits = {};
 
-		FCollisionQueryParams LocalCollisionParams;
-		LocalCollisionParams.AddIgnoredActor(GetOwner());
-
-		// Make sure surface type is returned.
-		LocalCollisionParams.bReturnPhysicalMaterial = true;
-
+		FCollisionQueryParams LocalCollisionParams = PlebComponentsAPI::PlebDefaultQueryParams;
 		for (const AActor* Actor : IgnoredActors) {
 			LocalCollisionParams.AddIgnoredActor(Actor);
 		}
 
 		// For each shot fired (Shotgun Case)
 		for (int i = 0; i < FireCount; ++i) {
-			FHitResult Hit;
 			// Get random point in lens.
-			FVector LensSample = FVector(
-				FMath::RandRange(LensLocation.X - LensRadius, LensLocation.X + LensRadius),
-				FMath::RandRange(LensLocation.Y - LensRadius, LensLocation.Y + LensRadius),
-				FMath::RandRange(LensLocation.Z - LensRadius, LensLocation.Z + LensRadius)
-			);
+			FVector LensSample = PlebComponentsAPI::RandomPointInSphere(LensLocation, LensRadius);
 
+			// Get point towards target
 			FVector AdjustedTarget = ((LensSample - Origin).GetSafeNormal() * FiringDistance) + Origin;
 
-			GetWorld()->LineTraceSingleByChannel(Hit, Origin, AdjustedTarget, FiringChannel, LocalCollisionParams);
 			if (bDebug) {
 				DrawDebugLine(GetWorld(), Origin, AdjustedTarget, FColor(0, 255, 0), false, 3.f);
 			}
 
-			Hits.Add(Hit);
+			Hits.Add(PlebComponentsAPI::LineTraceSingleByLength(GetOwner(), Origin, AdjustedTarget, FiringDistance, LocalCollisionParams));
 		}
 
 		BroadcastHitResults(Hits);

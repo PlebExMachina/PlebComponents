@@ -13,6 +13,8 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnLoginDelegate, APlayerController*
 * call Multicast RPCs.
 * 
 * This was created because at the time of AGameMode::PostLogin Multicast RPC will not replicate to the client.
+* 
+* !! -- It is probably preferable to use replication and On_Rep functions wherever this component could be used.
 */
 UCLASS(BlueprintType, ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class PLEBCOMPONENTS_API UControllerLogin : public UActorComponent

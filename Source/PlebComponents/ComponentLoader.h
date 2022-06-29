@@ -10,6 +10,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnComponentLoadedDelegate, UActorC
 
 /*
 * Handles the Netcode for loading new components onto the owner. 
+* !! Inherently unsafe - OnComponentLoaded will need to be used on the server side to make sure nothing malicious is going on.
 */
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class PLEBCOMPONENTS_API UComponentLoader : public UActorComponent

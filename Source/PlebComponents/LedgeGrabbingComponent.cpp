@@ -8,6 +8,7 @@
 #include "DrawDebugHelpers.h"
 #include "Net/UnrealNetwork.h"
 #include "GameFramework/Character.h"
+#include "PlebComponentsAPI.h"
 
 namespace {
 	auto IsServer = [](UObject* o) -> bool { return nullptr != o->GetWorld()->GetAuthGameMode(); };
@@ -63,6 +64,12 @@ void ULedgeGrabbingComponent::TickComponent(float DeltaTime, ELevelTick TickType
 				FVector LowFar = Low + DistanceOffset;
 				FVector RightOffset = GetOwner()->GetActorRightVector()*GrabRadius;
 				FVector LeftOffset = RightOffset * -1;
+
+				/**
+					The logic for these traces are rather complex so to avoid breaking it I wont touch it in the refactor.
+					If they come up again I'll encapsulate this parallel line trace technique.
+				**/
+
 				// Trace Forward checking if anything can be potentially grabbable.
 				GetWorld()->LineTraceSingleByObjectType(
 					ForwardTraceResultLeft,
@@ -186,7 +193,7 @@ void ULedgeGrabbingComponent::SetCheckEnabled(bool NewEnabled) {
 
 UCharacterMovementComponent* ULedgeGrabbingComponent::GetCharacterMovement() {
 	if (!_CharacterMovement) {
-		_CharacterMovement = Cast<UCharacterMovementComponent>(GetOwner()->GetComponentByClass(UCharacterMovementComponent::StaticClass()));
+		_CharacterMovement = PlebComponentsAPI::GetComponent<UCharacterMovementComponent>(GetOwner());
 	}
 	return _CharacterMovement;
 }
@@ -194,7 +201,7 @@ UCharacterMovementComponent* ULedgeGrabbingComponent::GetCharacterMovement() {
 UMeshComponent* ULedgeGrabbingComponent::GetMesh()
 {
 	if (!_Mesh) {
-		_Mesh = Cast<UMeshComponent>(GetOwner()->GetComponentByClass(MeshClass));
+		_Mesh = PlebComponentsAPI::GetComponent<UMeshComponent>(GetOwner(), MeshClass);
 	}
 	return _Mesh;
 }

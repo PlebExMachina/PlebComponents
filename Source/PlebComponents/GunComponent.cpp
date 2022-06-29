@@ -44,14 +44,12 @@ void UGunComponent::TickComponent(float DeltaTime, enum ELevelTick TickType, FAc
 
 void UGunComponent::PlayMuzzleFX(UHitscanComponent* Comp, const TArray<FHitResult>& Hits) {
 	if (OriginPoint) {
-		USoundCue* SoundFX = FiringSFX.LoadSynchronous();
-		UParticleSystem* ParticleFX = FiringFlash.LoadSynchronous();
-		if (SoundFX) {
-			UGameplayStatics::PlaySoundAtLocation(this, SoundFX, OriginPoint->GetComponentLocation());
+		if (FiringSFX.LoadSynchronous()) {
+			UGameplayStatics::PlaySoundAtLocation(this, FiringSFX.Get(), OriginPoint->GetComponentLocation());
 		}
 
-		if (ParticleFX) {
-			UGameplayStatics::SpawnEmitterAttached(ParticleFX, OriginPoint, NAME_None, OriginPoint->GetComponentLocation(), OriginPoint->GetComponentRotation(), EAttachLocation::KeepWorldPosition);
+		if (FiringFlash.LoadSynchronous()) {
+			UGameplayStatics::SpawnEmitterAttached(FiringFlash.Get(), OriginPoint, NAME_None, OriginPoint->GetComponentLocation(), OriginPoint->GetComponentRotation(), EAttachLocation::KeepWorldPosition);
 		}
 	}
 }

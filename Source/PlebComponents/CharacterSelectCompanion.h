@@ -22,6 +22,7 @@ public:
 	// Sets default values for this component's properties
 	UCharacterSelectCompanion();
 
+	// Transfer control to server to pick a character.
 	UFUNCTION(BlueprintCallable, Server, Reliable)
 	void ChooseCharacter(TSubclassOf<APawn> Character);
 };

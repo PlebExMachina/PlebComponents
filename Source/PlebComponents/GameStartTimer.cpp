@@ -37,6 +37,7 @@ bool UGameStartTimer::GetGameAlreadyStarted() {
 }
 
 void UGameStartTimer::StopTimer(bool StartGame) {
+	// Stop timer. If game hasn't already started then broadcast that the game is beginning.
 	if (GetOwner()->GetWorld()->GetAuthGameMode()) {
 		SetComponentTickEnabled(false);
 		if (StartGame && !_internalGameAlreadyStarted) {
@@ -47,6 +48,7 @@ void UGameStartTimer::StopTimer(bool StartGame) {
 }
 
 void UGameStartTimer::StartTimer(float StartTime) {
+	// Begins timer initializing it to the StartTime.
 	if (GetOwner()->GetWorld()->GetAuthGameMode()) {
 		_internalRemainingTime = StartTime;
 		SetComponentTickEnabled(true);
@@ -56,6 +58,7 @@ void UGameStartTimer::StartTimer(float StartTime) {
 // Called every frame
 void UGameStartTimer::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
+	// Tick Timer
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 	if (GetOwner()->GetWorld()->GetAuthGameMode()) {
 		_internalRemainingTime = FMath::Max(0.f, _internalRemainingTime - DeltaTime);

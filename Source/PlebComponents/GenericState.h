@@ -21,6 +21,8 @@
 * WARNING: This component can possibly introduce security risks. Do not use it for anything that needs to be validated.
 * A typical use case is it may deliver state information about what a player may "want" to do. 
 * It's still up to the Server to make sure there's no Foul Play.
+* 
+* !! - I do not recommend using this component at all but having a dynamic catch-all container can be tempting.
 */
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class PLEBCOMPONENTS_API UGenericState : public UActorComponent

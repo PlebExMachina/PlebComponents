@@ -14,6 +14,7 @@ UCharacterSelect::UCharacterSelect()
 
 void UCharacterSelect::TrackPlayer(APlayerController * Player, UPARAM(ref) const TArray<TSubclassOf<APawn>>& PlayerAllowedCharacters)
 {
+	// Start tracking player in game.
 	if (GetOwner()->GetWorld()->GetAuthGameMode()) {
 		auto ExistingItem = CharacterSelectData.FindByPredicate([&](const FCharacterSelectContainer& i) { return i.Player == Player; });
 		if (!ExistingItem) {
@@ -24,6 +25,7 @@ void UCharacterSelect::TrackPlayer(APlayerController * Player, UPARAM(ref) const
 
 void UCharacterSelect::UntrackPlayer(APlayerController * Player)
 {
+	// Stop tracking player in game.
 	if (GetOwner()->GetWorld()->GetAuthGameMode()) {
 		int32 IndexOf = CharacterSelectData.IndexOfByPredicate([&](const FCharacterSelectContainer& i) { return i.Player == Player; });
 		if (IndexOf != INDEX_NONE) {
@@ -34,10 +36,12 @@ void UCharacterSelect::UntrackPlayer(APlayerController * Player)
 
 void UCharacterSelect::ChooseCharacter_Implementation(APlayerController * Player, TSubclassOf<APawn> Character)
 {
+	// Broadcast that a character has been chosen
 	auto ExistingItem = CharacterSelectData.FindByPredicate([&](const FCharacterSelectContainer& i) { return i.Player == Player; });
 	if (ExistingItem && Character) {
 		if (ExistingItem->AllowedCharacters.FindByPredicate([&](TSubclassOf<APawn> i) { return Character->GetName() == i->GetName();  })) {
 			ExistingItem->ChosenCharacter = Character;
+		// Broadcast that an illegal character was somehow chosen.
 		} else {
 			OnIllegalCharacter.Broadcast(Player, Character);
 		}
@@ -46,6 +50,7 @@ void UCharacterSelect::ChooseCharacter_Implementation(APlayerController * Player
 
 void UCharacterSelect::ApplyCharacters()
 {
+	// Broadcast all locked in characters for processing.
 	if (GetOwner()->GetWorld()->GetAuthGameMode()) {
 		for (const auto& Data : CharacterSelectData) {
 			OnCharacterChosen.Broadcast(Data.Player, Data.ChosenCharacter);

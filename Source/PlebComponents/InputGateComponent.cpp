@@ -26,7 +26,7 @@ bool UInputGateComponent::Lock(APawn* Interactor, const TArray<TSubclassOf<UActo
 		// Assert Interactor Exists
 		if (_Interactor == nullptr) {
 			// Make sure it's player controlled.
-			APlayerController* InteractorController = Interactor->GetController<APlayerController>();
+			auto InteractorController = Interactor->GetController<APlayerController>();
 			if (InteractorController) {
 				// Make sure it has the needed components.
 				for (auto CompClass : RequiredComponents) {
