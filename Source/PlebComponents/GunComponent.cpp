@@ -16,6 +16,8 @@ namespace {
 void UGunComponent::GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	DOREPLIFETIME(UGunComponent, Damage);
+	DOREPLIFETIME(UGunComponent, FireRate);
 	DOREPLIFETIME(UGunComponent, OriginPoint);
 	DOREPLIFETIME(UGunComponent, MinimumLens);
 	DOREPLIFETIME(UGunComponent, MaximumLens);
@@ -54,6 +56,23 @@ void UGunComponent::PlayMuzzleFX(UHitscanComponent* Comp, const TArray<FHitResul
 	}
 }
 
+void UGunComponent::ApplyDamage(UHitscanComponent* Comp, const TArray<FHitResult>& Hits) {
+	if (IsServer(this)) {
+		// Point Damage Case
+		for (auto hit : Hits) {
+			if (hit.Actor.IsValid()) {
+				FPointDamageEvent DamageEvent;
+				DamageEvent.Damage = Damage;
+				DamageEvent.DamageTypeClass = DamageType;
+				DamageEvent.HitInfo = hit;
+				DamageEvent.ShotDirection = hit.TraceStart;
+				hit.Actor->TakeDamage(Damage, DamageEvent, _internalInstigator, GetOwner());
+			}
+		}
+		// TODO - Eventually, Splash Damage Case
+	}
+}
+
 void UGunComponent::BeginPlay()
 {
 	Super::BeginPlay();
@@ -62,6 +81,17 @@ void UGunComponent::BeginPlay()
 	}
 
 	OnHitscanHit.AddDynamic(this, &UGunComponent::PlayMuzzleFX);
+	OnHitscanHit.AddDynamic(this, &UGunComponent::ApplyDamage);
+}
+
+void UGunComponent::RestoreFire()
+{
+	bCanFire = true;
+}
+
+void UGunComponent::ForceStopAuto(UGunComponent* Comp)
+{
+	EndAuto();
 }
 
 UGunComponent::UGunComponent()
@@ -71,12 +101,15 @@ UGunComponent::UGunComponent()
 	Recoil = 400.f;
 	Recovery = 2000.f;
 	LensRadius = 30.f;
-
+	bIsAiming = false;
+	AimBonus = 2000.f;
 	MaximumAmmunition = 10;
 	AmmoConsumption = 2;
-
+	FireRate = 8.f;
+	bCanFire = true;
 	OriginPoint = nullptr;
-
+	Damage = 1.f;
+	_internalInstigator = nullptr;
 	DebugOrigin = nullptr;
 	DebugForwardVector = FVector::ZeroVector;
 }
@@ -133,7 +166,7 @@ float UGunComponent::GetRecovery()
 
 
 void UGunComponent::GunFire(const FVector& ForwardVector, const TArray<AActor*>& IgnoredActors) {
-	if (IsServer(this) && OriginPoint) {
+	if (bCanFire && IsServer(this) && OriginPoint) {
 		if (CurrentAmmunition != 0) {
 			Fire(OriginPoint->GetComponentLocation(), ForwardVector * FiringDistance + OriginPoint->GetComponentLocation(), IgnoredActors);
 			LensDistance = FMath::Clamp(LensDistance - Recoil, MinimumLens, MaximumLens);
@@ -151,6 +184,9 @@ void UGunComponent::GunFire(const FVector& ForwardVector, const TArray<AActor*>&
 		} else {
 			OnOutOfAmmo.Broadcast(this);
 		}
+
+		bCanFire = false;
+		GetWorld()->GetTimerManager().SetTimer(RestoreFireHandle, this, &UGunComponent::RestoreFire, 1.f / FireRate);
 	}
 }
 
@@ -192,5 +228,45 @@ void UGunComponent::SetOriginPoint(USceneComponent* NewOrigin)
 {
 	if (IsServer(this)) {
 		OriginPoint = NewOrigin;
+	}
+}
+void UGunComponent::SetFireRate(float NewFireRate) {
+	if (IsServer(this)) {
+		FireRate = NewFireRate;
+	}
+}
+
+void UGunComponent::SetDamage(float NewDamage) {
+	if (IsServer(this)) {
+		Damage = NewDamage;
+	}
+}
+
+void UGunComponent::BeginAuto() {
+	if (IsServer(this)) {
+		bAutoIsOn = true;
+	}
+}
+
+void UGunComponent::EndAuto() {
+	if (IsServer(this)) {
+		bAutoIsOn = false;
+	}
+}
+
+bool UGunComponent::IsAutoActive() {
+	return bAutoIsOn;
+}
+
+void UGunComponent::SetInstigator(AController* Instigator)
+{
+	if (IsServer(this)) {
+		_internalInstigator = Instigator;
+	}
+}
+
+void UGunComponent::SetDamageType(TSubclassOf<UDamageType> NewDamageType) {
+	if (IsServer(this)) {
+		DamageType = NewDamageType;
 	}
 }

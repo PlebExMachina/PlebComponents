@@ -17,6 +17,14 @@ protected:
 	UFUNCTION(NetMulticast, Reliable)
 	void BroadcastHitResults(const TArray<FHitResult>& HitResults);
 
+	// Whether or not the gun is being aimed.
+	UPROPERTY(Replicated)
+	bool bIsAiming;
+
+	// How much further to place the aiming lens while aiming down sights. 
+	UPROPERTY(Replicated, EditAnywhere)
+	float AimBonus;
+
 public:	
 	// Sets default values for this component's properties
 	UHitscanComponent();
@@ -51,4 +59,20 @@ public:
 	// Server Only, Fires a raycast utilizing the configuration. The raycast result is then multicast and passed 
 	UFUNCTION(BlueprintCallable)
 	void Fire(const FVector& Origin, const FVector& Target, const TArray<AActor*>& IgnoredActors);
+
+	// Server Only, Begins Aiming Mode
+	UFUNCTION(BlueprintCallable)
+	void BeginAim();
+
+	// Server Only, Ends Aiming Mode
+	UFUNCTION(BlueprintCallable)
+	void EndAim();
+
+	// Sets how much further to place the aiming lens when aiming down sights.
+	UFUNCTION(BlueprintCallable)
+	void SetAimBonus(float Bonus);
+
+	// Returns whether or not the gun is being aimed down sights.
+	UFUNCTION(BlueprintPure)
+	bool IsAiming();
 };

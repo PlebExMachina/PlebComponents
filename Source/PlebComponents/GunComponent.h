@@ -28,9 +28,28 @@ protected:
 
 	virtual void BeginPlay() override;
 
+	// Applies damage to the target actor on Server.
+	UFUNCTION()
+	void ApplyDamage(UHitscanComponent* Comp, const TArray<FHitResult>& Hits);
+
 	// Plays Muzzle Sound Effect / Muzzle Particle Effect
 	UFUNCTION()
 	void PlayMuzzleFX(UHitscanComponent* Comp, const TArray<FHitResult>& Hits);
+
+	// Sets it so that the gun can be fired again.
+	UFUNCTION()
+	void RestoreFire();
+
+	UPROPERTY()
+	FTimerHandle RestoreFireHandle;
+
+	// Automatically stops automatic mode when OutOfAmmo triggers.
+	UFUNCTION()
+	void ForceStopAuto(UGunComponent* Comp);
+	
+	// The amount of damage a bullet inflicts.
+	UPROPERTY(EditAnywhere, Replicated)
+	float Damage;
 
 	// The minimum distance the lens can be.
 	UPROPERTY(EditAnywhere, Replicated)
@@ -59,6 +78,26 @@ protected:
 	// How much ammunition the weapon consumes per shot.
 	UPROPERTY(Replicated)
 	int32 AmmoConsumption;
+
+	// How often the gun can be fired per second.
+	UPROPERTY(Replicated, EditAnywhere)
+	float FireRate;
+
+	// Whether or not the gun can currently fire.
+	UPROPERTY()
+	bool bCanFire;
+
+	// Whether or not the gun is in automatic mode.
+	UPROPERTY()
+	bool bAutoIsOn;
+
+	// Server Only, The instigator of damage events.
+	UPROPERTY()
+	AController* _internalInstigator;
+
+	// Server Only, the type of damage the gun inflicts.
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<UDamageType> DamageType;
 
 	// The sound effect to play when the gun fires.
 	UPROPERTY(Replicated, EditAnywhere)
@@ -138,4 +177,32 @@ public:
 	// Server Only, Sets the origin object for the bullet to be fired from.
 	UFUNCTION(BlueprintCallable)
 	void SetOriginPoint(USceneComponent* NewOrigin);
+
+	// Server Only, Sets how fast the gun can fire per second.
+	UFUNCTION(BlueprintCallable)
+	void SetFireRate(float NewFireRate);
+
+	// Server Only, Sets how much the damage is inflicted per bullet.
+	UFUNCTION(BlueprintCallable)
+	void SetDamage(float NewDamage);
+
+	// Server Only, Sets the damage type used by the gun.
+	UFUNCTION(BlueprintCallable)
+	void SetDamageType(TSubclassOf<UDamageType> NewDamageType);
+
+	// Server Only, Sets the Instigator to resolve damage events.
+	UFUNCTION(BlueprintCallable)
+	void SetInstigator(AController* Instigator);
+
+	// Begins Automatic Fire
+	// Note: Automatic Mode is just for state tracking and book keeping. The caller needs to actually trigger the fire events.
+	UFUNCTION(BlueprintCallable)
+	void BeginAuto();
+
+	// Ends Automatic Fire
+	UFUNCTION(BlueprintCallable)
+	void EndAuto();
+
+	UFUNCTION(BlueprintPure)
+	bool IsAutoActive();
 };

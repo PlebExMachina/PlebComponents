@@ -6,9 +6,15 @@
 #include "DrawDebugHelpers.h"
 #include "PlebComponentsAPI.h"
 
+namespace {
+	auto IsServer = [](UObject* o) -> bool { return o->GetWorld()->GetAuthGameMode() != nullptr; };
+};
+
 void UHitscanComponent::GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	DOREPLIFETIME(UHitscanComponent, bIsAiming);
+	DOREPLIFETIME(UHitscanComponent, AimBonus);
 	DOREPLIFETIME(UHitscanComponent, LensRadius);
 	DOREPLIFETIME(UHitscanComponent, LensDistance);
 	DOREPLIFETIME(UHitscanComponent, FiringDistance);
@@ -35,7 +41,8 @@ void UHitscanComponent::Fire(const FVector& Origin, const FVector& Target, const
 {
 	if (GetWorld()->GetAuthGameMode() != nullptr) {
 		// Get Location of the Lens
-		FVector LensLocation = ((Target - Origin).GetSafeNormal() * LensDistance) + Origin;
+		float CorrectedLensDistance = bIsAiming ? LensDistance + AimBonus : LensDistance;
+		FVector LensLocation = ((Target - Origin).GetSafeNormal() * CorrectedLensDistance) + Origin;
 		TArray<FHitResult> Hits = {};
 
 		FCollisionQueryParams LocalCollisionParams = PlebComponentsAPI::PlebDefaultQueryParams;
@@ -64,4 +71,26 @@ void UHitscanComponent::Fire(const FVector& Origin, const FVector& Target, const
 
 void UHitscanComponent::BroadcastHitResults_Implementation(const TArray<FHitResult>& HitResults) {
 	OnHitscanHit.Broadcast(this,HitResults);
+}
+
+void UHitscanComponent::BeginAim() {
+	if (IsServer(this)) {
+		bIsAiming = true;
+	}
+}
+
+void UHitscanComponent::EndAim() {
+	if (IsServer(this)) {
+		bIsAiming = false;
+	}
+}
+
+void UHitscanComponent::SetAimBonus(float Bonus) {
+	if (IsServer(this)) {
+		AimBonus = Bonus;
+	}
+}
+
+bool UHitscanComponent::IsAiming() {
+	return bIsAiming;
 }
